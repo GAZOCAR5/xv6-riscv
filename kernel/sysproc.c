@@ -91,3 +91,28 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+uint64 sys_getppid(void)
+{
+    struct proc *p = myproc();  // Corregir la declaración de p
+    return p->parent ? p->parent->pid : 0;  // Retorna el pid del padre si existe, de lo contrario 0
+}
+
+uint64 sys_getancestor(void)
+{
+    int n;
+    struct proc *p = myproc();  // Corregir la declaración de p
+    argint(0, &n);  // Obtener el argumento
+    if (n < 0) {
+        return -1;
+    }
+    // Ciclo para navegar hacia el ancestro n
+    for (int i = 0; i < n; i++) {
+        if (p->parent == 0)
+            return -1;
+        p = p->parent;
+    }
+
+    return p->pid;  // Retorna el pid del ancestro n
+}
