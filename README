@@ -1,6 +1,6 @@
 Funcionamiento del sistema de prioridades
 
-Se incorporan 20 procesos donde se les asignan prioridades respectivas, con inicialización en 0 y boost en 1. Tal como se pudo estudiar en la Prueba 1, mientras mayor es la prioridad el planificador prefiere escoger ese proceso para su ejecución. Este valor de prioridad se rige por un ajuste propuesto por el boost, donde si la prioridad llega a 9, el boost reduce su prioridad con -1 y si prioridad es 0, boost aumenta su valor de prioridad por +1. Dando orden para que el scheduler seleccione el proceso con mayor prioridad para ejecución, siendo estos los con menor valor numérico.
+Se incorporan 20 procesos donde se les asignan prioridades respectivas, con inicialización en 0 y boost en 1, donde cada vez que entra un proceso nuevo al sistema se aumenta la prioridad de los procesos pendientes. Tal como se pudo estudiar en la Prueba 1, mientras mayor es la prioridad el planificador prefiere escoger ese proceso para su ejecución. Este valor de prioridad se rige por un ajuste propuesto por el boost, donde si la prioridad llega a 9, el boost reduce su prioridad con -1 y si prioridad es 0, boost aumenta su valor de prioridad por +1. Dando orden para que el scheduler seleccione el proceso con mayor prioridad para ejecución, siendo estos los con menor valor numérico.
 
 Modificaciones realizadas
 
