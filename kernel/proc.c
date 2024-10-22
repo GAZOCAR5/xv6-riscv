@@ -26,6 +26,7 @@ extern char trampoline[]; // trampoline.S
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
 
+
 // Allocate a page for each process's kernel stack.
 // Map it high in memory, followed by an invalid
 // guard page.
@@ -125,6 +126,10 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  // Inicializa la prioridad y boost con 0 y 1
+  p->prioridad = 0;
+  p->boost = 1;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -148,6 +153,7 @@ found:
 
   return p;
 }
+
 
 // free a proc structure and the data hanging from it,
 // including user pages.
@@ -441,8 +447,11 @@ wait(uint64 addr)
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
-void
-scheduler(void)
+
+
+// ingresamos una funcion para scheduler para administrar las prioridades de los procesos
+
+void scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
@@ -454,8 +463,35 @@ scheduler(void)
     // processes are waiting.
     intr_on();
 
-    int found = 0;
-    for(p = proc; p < &proc[NPROC]; p++) {
+    struct proc *highest_priority_proc = 0; //pointer al proceso con prioridad
+
+    // Ajusta las prioridades y aumenta los existentes
+    for (p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if (p->state == RUNNABLE) {
+        // Aumenta o disminuye la prioridad según el boost
+        p->prioridad += p->boost;
+
+        // Lógica de cambio de boost según la prioridad (9 o 0)
+        if(p->prioridad >= 9) {
+          p->prioridad = 9;
+          p->boost = -1;  // Cambiar el boost a -1 si la prioridad llega a 9
+        } else if(p->prioridad <= 0) {
+          p->prioridad = 0;
+          p->boost = 1;   // Cambiar el boost a 1 si la prioridad llega a 0
+        }
+
+        // validador si la nueva función tiene mayor prioridad que el anterior
+        if (highest_priority_proc == 0 || p->prioridad < highest_priority_proc->prioridad) {
+          highest_priority_proc = p;
+        }
+      }
+      release(&p->lock);
+    }
+
+    // Ejecuta el proceso con mayor prioridad 
+    if (highest_priority_proc != 0) {
+      p = highest_priority_proc;
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
@@ -468,11 +504,9 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
-        found = 1;
       }
       release(&p->lock);
-    }
-    if(found == 0) {
+    } else {
       // nothing to run; stop running on this core until an interrupt.
       intr_on();
       asm volatile("wfi");
@@ -693,4 +727,3 @@ procdump(void)
     printf("\n");
   }
 }
- 
