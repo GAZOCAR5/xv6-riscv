@@ -1,46 +1,14 @@
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern RISC-V multiprocessor using ANSI C.
+Funcionamiento del sistema de prioridades
 
-ACKNOWLEDGMENTS
+Se incorporan 20 procesos donde se les asignan prioridades respectivas, con inicialización en 0 y boost en 1. Tal como se pudo estudiar en la Prueba 1, mientras mayor es la prioridad el planificador prefiere escoger ese proceso para su ejecución. Este valor de prioridad se rige por un ajuste propuesto por el boost, donde si la prioridad llega a 9, el boost reduce su prioridad con -1 y si prioridad es 0, boost aumenta su valor de prioridad por +1. Dando orden para que el scheduler seleccione el proceso con mayor prioridad para ejecución, siendo estos los con menor valor numérico.
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)).  See also https://pdos.csail.mit.edu/6.1810/, which provides
-pointers to on-line resources for v6.
+Modificaciones realizadas
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
+En los documentos, tanto proc.c como proc.h se modificaron, donde el primero inicializa los valores de prioridad y boost, y el segundo contiene la estructura de los procesos, detallando los campos de prioridad y boost.
+El ambiente lógico del scheduler también se gestiona en proc.c, donde se ajustan el boost y la prioridad de cada proceso en la cola de ejecución. El scheduler selecciona los procesos en orden, priorizando aquellos con el menor valor numérico de prioridad. Ordenando así las prioridades de mayor a menor prioridad.
 
-We are also grateful for the bug reports and patches contributed by
-Takahiro Aoyagi, Marcelo Arroyo, Silas Boyd-Wickizer, Anton Burtsev,
-carlclone, Ian Chen, Dan Cross, Cody Cutler, Mike CAT, Tej Chajed,
-Asami Doi,Wenyang Duan, eyalz800, Nelson Elhage, Saar Ettinger, Alice
-Ferrazzi, Nathaniel Filardo, flespark, Peter Froehlich, Yakir Goaron,
-Shivam Handa, Matt Harvey, Bryan Henry, jaichenhengjie, Jim Huang,
-Matúš Jókay, John Jolly, Alexander Kapshuk, Anders Kaseorg, kehao95,
-Wolfgang Keller, Jungwoo Kim, Jonathan Kimmitt, Eddie Kohler, Vadim
-Kolontsov, Austin Liew, l0stman, Pavan Maddamsetti, Imbar Marinescu,
-Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi Merimovich, Mark
-Morrissey, mtasm, Joel Nider, Hayato Ohhashi, OptimisticSide,
-phosphagos, Harry Porter, Greg Price, RayAndrew, Jude Rich, segfault,
-Ayan Shafqat, Eldar Sehayek, Yongming Shen, Fumiya Shigemitsu, snoire,
-Taojie, Cam Tenny, tyfkda, Warren Toomey, Stephen Tu, Alissa Tung,
-Rafael Ubal, Amane Uehara, Pablo Ventura, Xi Wang, WaheedHafez,
-Keiichi Watanabe, Lucas Wolf, Nicolas Wolovick, wxdao, Grant Wu, x653,
-Jindong Zhang, Icenowy Zheng, ZhUyU1997, and Zou Chang Wei.
+Dificultades y soluciones
 
-ERROR REPORTS
+El orden de prioridades fue particularmente difícil al momento de desarrollar el sistema lógico del scheduler, pero luego de implementar la lógica de boost +1 y -1 de manera correcta, lo demás fue utilizar condicionales lógicas para poder escoger el valor con menor prioridad. Por lo tanto, una correcta asignación de los valores numéricos de prioridad es crucial para mantener la integridad del orden de ejecución de los procesos, ya que todas las decisiones de selección del scheduler dependen de estos valores.
 
-Please send errors and suggestions to Frans Kaashoek and Robert Morris
-(kaashoek,rtm@mit.edu).  The main purpose of xv6 is as a teaching
-operating system for MIT's 6.1810, so we are more interested in
-simplifications and clarifications than new features.
-
-BUILDING AND RUNNING XV6
-
-You will need a RISC-V "newlib" tool chain from
-https://github.com/riscv/riscv-gnu-toolchain, and qemu compiled for
-riscv64-softmmu.  Once they are installed, and in your shell
-search path, you can run "make qemu".
+Por otro lado, trabajar con máquinas virtuales siempre le genera problemas a mi computador, en especial si debo utilizar IDEs de alto consumo como lo es VScode. Esto realmente dificulta mi facilidad para programar y desplazarme por la pantalla a través de los multiples documentos de código, pero encontré mucho más práctico únicamente correr QEMU en la máquina virtual, pero desarrollar la programación en Windows. Así agilizando mi desarrollo del trabajo.
