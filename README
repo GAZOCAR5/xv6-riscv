@@ -1,4 +1,4 @@
-#Tarea 3
+# Tarea 3
 ## 1. Funcionamiento y Lógica de la Protección de Memoria
 La implementación de mprotect y munprotect en xv6 permite que el sistema operativo gestione los permisos de escritura en páginas específicas de la memoria de un proceso. La lógica detrás de esta protección de memoria radica en modificar el bit de permiso de escritura (W) en cada entrada de la tabla de páginas (PTE) correspondiente a las páginas seleccionadas.
 
