@@ -1,6 +1,6 @@
 # Tarea 3
-## 1. Funcionamiento y Lógica de la Protección de Memoria
-La implementación de mprotect y munprotect en xv6 permite que el sistema operativo gestione los permisos de escritura en páginas específicas de la memoria de un proceso. La lógica detrás de esta protección de memoria radica en modificar el bit de permiso de escritura (W) en cada entrada de la tabla de páginas (PTE) correspondiente a las páginas seleccionadas.
+## 1. Funcionamiento y lógica de la protección de memoria
+La implementación de mprotect y munprotect en xv6 permite que el sistema operativo gestione los permisos de escritura en páginas específicas de la memoria de un proceso. La lógica detrás de esta protección de memoria se enfoca en modificar el bit de permiso de escritura (W) en cada entrada de la tabla de páginas (PTE) respecto a las páginas seleccionadas.
 
 mprotect: Esta función convierte las páginas especificadas en solo lectura al desactivar el permiso de escritura en sus respectivas entradas en la tabla de páginas (PTE). La función recibe una dirección (addr) y un rango en páginas (len). Calcula la página de inicio más cercana a addr, determina el número de páginas afectadas y ajusta el bit W en cada entrada PTE dentro del rango, para configurar dichas páginas como de solo lectura.
 
@@ -10,8 +10,7 @@ Estas funciones permiten que el sistema genere una excepción de página faltant
 
 Para compilar y ejecutar, se utiliza el archivo protection.c, ejecutando make clean, seguido de make qemu y luego protection:
 
-plaintext
-Copiar código
+
 xv6 kernel is booting
 
 hart 1 starting
@@ -19,6 +18,8 @@ hart 2 starting
 
 ainit: starting sh
 $ protection
+
+
 ## 2. Explicación de las Modificaciones Realizadas
 Para implementar mprotect y munprotect en xv6, se realizaron los siguientes cambios en el código fuente:
 
