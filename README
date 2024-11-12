@@ -33,15 +33,16 @@ Se añadieron las llamadas al sistema sys_mprotect y sys_munprotect en sysproc.c
 Se incluyeron validaciones para asegurar que los parámetros addr y len sean válidos. Si addr es 0 o len es menor o igual a 0, las funciones devuelven -1 para indicar error. Adicionalmente, se añadieron verificaciones para confirmar que las direcciones estén dentro del espacio de memoria del proceso, evitando cambios en áreas de memoria no válidas.
 
 ## 3. Dificultades Encontradas y Soluciones Implementadas
-### Error con Argaddr y Argint:
-Inicialmente, se intentó verificar errores mediante condiciones if en las funciones argaddr y argint, pero descubrimos que ambas funciones son void, por lo que no pueden compararse directamente con un valor.
-
-Solución: En lugar de comparar el valor de retorno, llamamos a argaddr y argint directamente y validamos los valores asignados a las variables tras la llamada.
 
 ### Validación de Direcciones de Memoria:
 Garantizar que los parámetros addr y len pertenecían al espacio de direcciones del proceso fue desafiante, ya que xv6 gestiona su propio espacio de direcciones virtuales.
 
 Solución:Para solucionarlo se implementaron validaciones estrictas en mprotect y munprotect para asegurar que las direcciones estuvieran dentro del espacio de usuario (MAXVA) y alineadas correctamente a los límites de página.
+
+### Error con Argaddr y Argint:
+Inicialmente, se intentó verificar errores mediante condiciones if en las funciones argaddr y argint, pero descubrimos que ambas funciones son void, por lo que no pueden compararse directamente con un valor.
+
+Solución: En lugar de comparar el valor de retorno, llamamos a argaddr y argint directamente y validamos los valores asignados a las variables tras la llamada.
 
 ### Pruebas y Verificación de Excepciones de Página:
 Durante la prueba, era necesario generar una excepción de página faltante para confirmar que mprotect funcionaba bien. Esto generaba el riesgo de que el programa finalizara inesperadamente.
