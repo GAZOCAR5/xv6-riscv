@@ -23,27 +23,27 @@ $ protection
 ## 2. Explicación de las Modificaciones Realizadas
 Para implementar mprotect y munprotect en xv6, se realizaron los siguientes cambios en el código fuente:
 
-Creación de las Funciones mprotect y munprotect:
-Se implementaron las funciones mprotect y munprotect en el archivo vm.c, que gestiona la memoria en xv6. Ambas recorren las páginas en el rango definido por addr y len, y modifican el bit W de cada PTE correspondiente. mprotect desactiva el bit, y munprotect lo vuelve a activar, permitiendo así el control sobre el acceso de escritura.
+### Creación de las Funciones mprotect y munprotect:
+Se implementaron las funciones mprotect y munprotect en el archivo vm.c, que gestiona la memoria en xv6. Ambas recorren las páginas en el rango definido por addr y len, y modifican el bit W de cada PTE. mprotect desactiva el bit, y munprotect lo vuelve a activar, permitiendo así el control sobre el acceso de escritura.
 
-Definición de Nuevos Syscalls:
+### Definición de Nuevos Syscalls:
 Se añadieron las llamadas al sistema sys_mprotect y sys_munprotect en sysproc.c para permitir que estos cambios sean accesibles a los procesos. Además, se definieron en syscall.h y user.h, permitiendo que los programas de usuario invoquen mprotect y munprotect directamente.
 
-Manejo de Errores:
+### Manejo de Errores:
 Se incluyeron validaciones para asegurar que los parámetros addr y len sean válidos. Si addr es 0 o len es menor o igual a 0, las funciones devuelven -1 para indicar error. Adicionalmente, se añadieron verificaciones para confirmar que las direcciones estén dentro del espacio de memoria del proceso, evitando cambios en áreas de memoria no válidas.
 
 ## 3. Dificultades Encontradas y Soluciones Implementadas
-Error con Argaddr y Argint:
+### Error con Argaddr y Argint:
 Inicialmente, se intentó verificar errores mediante condiciones if en las funciones argaddr y argint, pero descubrimos que ambas funciones son void, por lo que no pueden compararse directamente con un valor.
 
 Solución: En lugar de comparar el valor de retorno, llamamos a argaddr y argint directamente y validamos los valores asignados a las variables tras la llamada.
 
-Validación de Direcciones de Memoria:
+### Validación de Direcciones de Memoria:
 Garantizar que los parámetros addr y len pertenecían al espacio de direcciones del proceso fue desafiante, ya que xv6 gestiona su propio espacio de direcciones virtuales.
 
-Para solucionarlo se implementaron validaciones estrictas en mprotect y munprotect para asegurar que las direcciones estuvieran dentro del espacio de usuario (MAXVA) y alineadas correctamente a los límites de página.
+Solución:Para solucionarlo se implementaron validaciones estrictas en mprotect y munprotect para asegurar que las direcciones estuvieran dentro del espacio de usuario (MAXVA) y alineadas correctamente a los límites de página.
 
-Pruebas y Verificación de Excepciones de Página:
+### Pruebas y Verificación de Excepciones de Página:
 Durante la prueba, era necesario generar una excepción de página faltante para confirmar que mprotect funcionaba bien. Esto generaba el riesgo de que el programa finalizara inesperadamente.
 
-Para solucionarlo temporalmente deshabilitamos la parte de la prueba que generaba la excepción, permitiendo que munprotect fuese probado sin interrupciones y asegurando que ambas funciones trabajaran en conjunto como se esperaba.
+Solución: Para solucionarlo temporalmente deshabilitamos la parte de la prueba que generaba la excepción, permitiendo que munprotect fuese probado sin interrupciones y asegurando que ambas funciones trabajaran en conjunto como se esperaba.
