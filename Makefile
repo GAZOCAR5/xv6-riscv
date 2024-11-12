@@ -140,8 +140,11 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_yosoytupadre\
-
+	$U/_prueba\
+	$U/_protection\
+		
 fs.img: mkfs/mkfs README $(UPROGS)
+
 	mkfs/mkfs fs.img README $(UPROGS)
 
 -include kernel/*.d user/*.d
@@ -178,4 +181,3 @@ qemu: $K/kernel fs.img
 qemu-gdb: $K/kernel .gdbinit fs.img
 	@echo "*** Now run 'gdb' in another window." 1>&2
 	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
-
