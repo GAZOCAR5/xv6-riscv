@@ -1,50 +1,71 @@
 # Tarea 3
-## 1. Funcionamiento y lógica de la protección de memoria
-La implementación de mprotect y munprotect en xv6 permite que el sistema operativo gestione los permisos de escritura en páginas específicas de la memoria de un proceso. La lógica detrás de esta protección de memoria se enfoca en modificar el bit de permiso de escritura (W) en cada entrada de la tabla de páginas (PTE) respecto a las páginas seleccionadas.
+## 1. Funcionamiento y lógica de sistema de permisos xv6
 
-mprotect: Esta función convierte las páginas especificadas en solo lectura al desactivar el permiso de escritura en sus respectivas entradas en la tabla de páginas (PTE). La función recibe una dirección (addr) y un rango en páginas (len). Calcula la página de inicio más cercana a addr, determina el número de páginas afectadas y ajusta el bit W en cada entrada PTE dentro del rango, para configurar dichas páginas como de solo lectura.
+### Sistema de Permisos en xv6
+Este sistema mejora el control sobre el acceso y modificación de los archivos en xv6 mediante un nuevo mecanismo de permisos. Además, introduce una característica especial que permite marcar un archivo como inmutable, lo que significa que ni su contenido ni sus permisos pueden ser modificados.
 
-munprotect: Opera de manera inversa a mprotect. Utiliza los mismos parámetros (addr y len), calcula las páginas a modificar y recorre la tabla de páginas, reactivando el bit W en cada entrada de PTE, de modo que las páginas vuelvan a ser accesibles en escritura.
+### Tipos de Permisos
+Se definen los siguientes valores para los permisos de los archivos:
 
-Estas funciones permiten que el sistema genere una excepción de página faltante si un proceso intenta escribir en una página protegida por mprotect, proporcionando así un mecanismo de protección de memoria efectivo.
+0: Sin permisos, no permite ni lectura ni escritura.
+1: Solo lectura.
+2: Solo escritura.
+3: Lectura y escritura (valor predeterminado para nuevos archivos).
+5: Inmutable, lo que implica que el archivo es de solo lectura y sus permisos no pueden ser alterados.
 
-Para compilar y ejecutar, se utiliza el archivo protection.c, ejecutando make clean, seguido de make qemu y luego protection:
-
-
-xv6 kernel is booting
-
-hart 1 starting
-hart 2 starting
-
-ainit: starting sh
-$ protection
+### Cambios de funcionaliento
+Apertura de Archivos (sys_open): Si un archivo tiene permisos de solo lectura o está marcado como inmutable, no se permite abrirlo en modo escritura, y el sistema devuelve un error.
+Escritura en Archivos (sys_write): Antes de escribir, se verifica que el archivo tenga permisos de escritura. Si no los tiene, la operación falla.
+Cambio de Permisos (sys_chmod): Los permisos de un archivo pueden ser modificados, excepto si el archivo está marcado como inmutable. En ese caso, la operación es rechazada con un error.
 
 
 ## 2. Explicación de las Modificaciones Realizadas
-Para implementar mprotect y munprotect en xv6, se realizaron los siguientes cambios en el código fuente:
 
-### Creación de las Funciones mprotect y munprotect:
-Se implementaron las funciones mprotect y munprotect en el archivo vm.c, que gestiona la memoria en xv6. Ambas recorren las páginas en el rango definido por addr y len, y modifican el bit W de cada PTE. mprotect desactiva el bit, y munprotect lo vuelve a activar, permitiendo así el control sobre el acceso de escritura.
+1. Adición del Campo de Permisos al inode
+Se agregó un nuevo campo denominado permissions a la estructura inode dentro del archivo kernel/fs.h.
+Este campo almacena el estado de los permisos del archivo y se inicializa con el valor 3 (lectura y escritura) al crear un nuevo archivo.
 
-### Definición de Nuevos Syscalls:
-Se añadieron las llamadas al sistema sys_mprotect y sys_munprotect en sysproc.c para permitir que estos cambios sean accesibles a los procesos. Además, se definieron en syscall.h y user.h, permitiendo que los programas de usuario invoquen mprotect y munprotect directamente.
+2. Validaciones Agregadas en las Operaciones con Archivos
+sys_read: No se realizaron cambios significativos, ya que leer únicamente requiere permisos de lectura.
+sys_open: Se implementó una validación para impedir abrir archivos en modo escritura si estos tienen permisos de solo lectura o son inmutables.
+sys_write: Se añadió una verificación que asegura que solo se puede escribir en un archivo si tiene permisos de escritura.
 
-### Manejo de Errores:
-Se incluyeron validaciones para asegurar que los parámetros addr y len sean válidos. Si addr es 0 o len es menor o igual a 0, las funciones devuelven -1 para indicar error. Adicionalmente, se añadieron verificaciones para confirmar que las direcciones estén dentro del espacio de memoria del proceso, evitando cambios en áreas de memoria no válidas.
+3. Nueva Llamada al Sistema: chmod
+Se introdujo una nueva función del sistema, llamada sys_chmod, esta permite a los usuarios cambiar los permisos de los archivos. Su funcionamiento es el siguiente:
+
+-Comprobación de la existencia del archivo: Si el archivo no existe, se devuelve un error.
+-Verificación del estado de inmutabilidad: Si el archivo es inmutable, no se permite modificar sus permisos y se genera un error.
+-Actualización de permisos: Si pasa las validaciones anteriores, se actualiza el campo permissions del archivo con el nuevo valor.
+
+4. Registro de la Nueva Llamada chmod
+Para que el sistema reconozca la función sys_chmod, se realizaron modificaciones en los siguientes archivos:
+
+kernel/syscall.h: Se añadió la definición de SYS_chmod.
+kernel/syscall.c: Se incluyó la función sys_chmod en la tabla de llamadas al sistema.
+usys.pl: Se actualizó este archivo para generar automáticamente el código necesario para la nueva llamada al sistema.
+
+5. Pruebas Implementadas (user/permtest.c)
+Se creó un programa de prueba para verificar el correcto funcionamiento de las nuevas funcionalidades. Este programa realiza los siguientes pasos:
+
+Crear un archivo y verificar que tiene permisos de lectura y escritura por defecto.
+a. Cambiar los permisos a solo lectura y comprobar que no se puede escribir en el archivo.
+b. Cambiar los permisos nuevamente a lectura/escritura y verificar que ahora sí se puede escribir.
+c. Cambiar los permisos a inmutable y verificar que:
+    -    No es posible modificar el contenido del archivo.
+    -    No es posible modificar los permisos del archivo.
 
 ## 3. Dificultades Encontradas y Soluciones Implementadas
 
-### Validación de Direcciones de Memoria:
-Garantizar que los parámetros addr y len pertenecían al espacio de direcciones del proceso fue desafiante, ya que xv6 gestiona su propio espacio de direcciones virtuales.
+- Compatibilidad con Funciones Existentes: Las funciones originales como sys_open y sys_write no contemplaban la gestión de permisos.
+Solución: Se añadieron las validaciones correspondientes para verificar los permisos antes de ejecutar estas operaciones.
 
-Solución:Para solucionarlo se implementaron validaciones estrictas en mprotect y munprotect para asegurar que las direcciones estuvieran dentro del espacio de usuario (MAXVA) y alineadas correctamente a los límites de página.
+- Conflictos con Archivos de Encabezado: Durante la implementación, surgieron problemas con definiciones duplicadas en estructuras como spinlock e inode.
+Solución: Se revisaron y ajustaron las inclusiones de encabezados para evitar duplicados y conflictos.
 
-### Error con Argaddr y Argint:
-Inicialmente, se intentó verificar errores mediante condiciones if en las funciones argaddr y argint, pero descubrimos que ambas funciones son void, por lo que no pueden compararse directamente con un valor.
+- Fallos en Pruebas con Archivos Inmutables: Las pruebas fallaban al intentar cambiar los permisos de un archivo marcado como inmutable.
+Solución: Se mejoraron las validaciones en sys_chmod para manejar correctamente estos casos.
 
-Solución: En lugar de comparar el valor de retorno, llamamos a argaddr y argint directamente y validamos los valores asignados a las variables tras la llamada.
+- Problemas al Registrar la Nueva Llamada chmod: Inicialmente, hubo dificultades para que el sistema reconociera correctamente la función chmod.
+Solución: Se revisaron los archivos relacionados con llamadas al sistema (syscall.h, syscall.c y usys.pl) para asegurarse de que la configuración era correcta.
 
-### Pruebas y Verificación de Excepciones de Página:
-Durante la prueba, era necesario generar una excepción de página faltante para confirmar que mprotect funcionaba bien. Esto generaba el riesgo de que el programa finalizara inesperadamente.
 
-Solución: Para solucionarlo temporalmente deshabilitamos la parte de la prueba que generaba la excepción, permitiendo que munprotect fuese probado sin interrupciones y asegurando que ambas funciones trabajaran en conjunto como se esperaba.
